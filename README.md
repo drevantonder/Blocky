@@ -7,3 +7,4 @@ Instructions:
 2. Press the space bar to jump
 
 Please report any bugs at https://github.com/DrevanTonder/Blocky/issues
+ 
