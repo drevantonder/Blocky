@@ -50,20 +50,32 @@ class Player(pygame.sprite.Sprite):
 			for block in world_sprites:
 				block.rect.x -= x
 	def jump(self,MAP):
-		if MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y+40] != "air":
+		if MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] != "land" and MAP[self.rect.x,self.rect.y+40] != "air":
+			self.rect.y-=80
+			self.in_air=True
+		elif MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] == "land" and MAP[self.rect.x,self.rect.y+40] != "air":
 			self.rect.y-=40
 			self.in_air=True
 	def fall(self):
 		if self.in_air:
 			self.rect.y+=40
 class Map:
+	def __init__(self):
+		self.platform=False
 	def generate_type(self,x,y):
 		if x == 400 and y == 720: # for the player
 			Type = "air"
 		elif y == 760:
 			Type = "land"
+			self.platform = True
+		elif self.platform == True:
+			Type=random.choice(["land","land","land","air","land","air"])
 		else:
-			Type=random.choice(["land","air","air","air","air"])
+			Type=random.choice(["land","air","air","air","air","air","air","air","air","air","air","air","air","air"])
+		if Type == "land":
+			self.platform = True
+		else:
+			self.platform = False
 		return Type
 def myround(x, base):
 	return int(base * round(float(x)/base))
@@ -91,8 +103,8 @@ def main():
 	x=-800
 	y=0
 	no=0
-	for i in range(0,800):
-		if no == 40:
+	for i in range(0,1200):
+		if no == 60:
 			y+=amount
 			x=-800
 			no=0
