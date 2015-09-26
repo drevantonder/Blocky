@@ -3,12 +3,12 @@ import pygame,random,time
 #Constants
 WINDOWHEIGHT=800
 WINDOWWIDTH=800
-BLACK=[0,0,0]
+BLACK=[10,10,10]
 WHITE=[255,255,255]
 BLUE=[0,0,255]
 GREEN=[0,255,0]
 RED=[255,0,0]
-YELLOW=[255,255]
+YELLOW=[255,255,0]
 WATER=[235,244,250]
 LAND=[0,250,30]
 FPS=28
@@ -46,16 +46,22 @@ class Player(pygame.sprite.Sprite):
 		pos['y']=self.rect.y
 		return pos
 	def move(self,x,MAP,world_sprites):
-		if MAP[self.rect.x+x,self.rect.y] != "land":
-			for block in world_sprites:
-				block.rect.x -= x
+		try:
+			if MAP[self.rect.x+x,self.rect.y] == "air":
+				for block in world_sprites:
+					block.rect.x -= x
+		except KeyError:
+			pass
 	def jump(self,MAP):
-		if MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] != "land" and MAP[self.rect.x,self.rect.y+40] != "air":
-			self.rect.y-=80
-			self.in_air=True
-		elif MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] == "land" and MAP[self.rect.x,self.rect.y+40] != "air":
-			self.rect.y-=40
-			self.in_air=True
+		try:
+			if MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] != "land" and MAP[self.rect.x,self.rect.y+40] != "air":
+				self.rect.y-=80
+				self.in_air=True
+			elif MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] == "land" and MAP[self.rect.x,self.rect.y+40] != "air":
+				self.rect.y-=40
+				self.in_air=True
+		except KeyError:
+			pass
 	def fall(self):
 		if self.in_air:
 			self.rect.y+=40
@@ -86,12 +92,13 @@ def main():
 	pygame.display.set_caption('Blocky!!')
 	background = pygame.Surface(screen.get_size())
 	background = background.convert()
-	background.fill((WHITE))
+	background.fill((BLACK))
 	gravity=0
 	
 	#make pygame sprite groups
 	world_sprites=pygame.sprite.Group()
 	other_sprites=pygame.sprite.Group()
+	power_up_sprites=pygame.sprite.Group()
 	
 	#classes
 	map=Map()
@@ -119,7 +126,46 @@ def main():
 			world_sprites.add(Block([100,175,50],x,y,amount,amount,Type))
 		MAP[x,y] = Type
 		no += 1
-	
+	#game loop
+	while 1:
+		MAP.clear()
+		for block in world_sprites:
+			MAP[block.rect.x,block.rect.y]=block.type
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				quit()
+			elif event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_LEFT:
+					direction="left"
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
+				elif event.key == pygame.K_RIGHT:
+					direction="right"
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
+				elif event.key == pygame.K_SPACE:
+					direction="up"
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
+		
+		#gravity
+		if player.rect.y+80 < WINDOWHEIGHT:
+			if gravity == 35:
+				gravity=0
+				if player.in_air == True and MAP[player.rect.x,player.rect.y+40] != "land":
+					player.fall()
+			elif MAP[player.rect.x,player.rect.y+40] == "air":
+				player.in_air = True
+				gravity+=1
+			if MAP [player.rect.x,player.rect.y+40] == "land":
+				player.in_air = False
+				gravity = 0
+		#draw background
+		screen.blit(background, (0, 0))
+		world_sprites.draw(screen)
+		power_up_sprites.draw(screen)
+		other_sprites.draw(screen)
+		pygame.display.update()
+		time.sleep(0.01 )
+if __name__ == '__main__': main()
+
 	#game loop
 	while 1:
 		for block in world_sprites:
