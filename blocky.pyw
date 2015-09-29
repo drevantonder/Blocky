@@ -103,7 +103,6 @@ def main():
 	#make pygame sprite groups
 	world_sprites=pygame.sprite.Group()
 	other_sprites=pygame.sprite.Group()
-	power_up_sprites=pygame.sprite.Group()
 	
 	#classes
 	map=Map()
@@ -136,7 +135,6 @@ def main():
 	
 	screen.blit(background, (0, 0))
 	world_sprites.draw(screen)
-	power_up_sprites.draw(screen)
 	other_sprites.draw(screen)
 	pygame.display.update()
 	
@@ -174,7 +172,6 @@ def main():
 		#draw background
 		screen.blit(background, (0, 0))
 		world_sprites.draw(screen)
-		power_up_sprites.draw(screen)
 		other_sprites.draw(screen)
 		pygame.display.update()
 		time.sleep(0.01 )
