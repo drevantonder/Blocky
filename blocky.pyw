@@ -1,5 +1,5 @@
 import pygame,random,time
-from pgu import gui
+
 #Constants
 WINDOWHEIGHT=800
 WINDOWWIDTH=800
