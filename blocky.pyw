@@ -1,5 +1,5 @@
 import pygame,random,time
- 
+from pgu import gui
 #Constants
 WINDOWHEIGHT=800
 WINDOWWIDTH=800
@@ -61,7 +61,12 @@ class Player(pygame.sprite.Sprite):
 				self.rect.y-=40
 				self.in_air=True
 		except KeyError:
-			pass
+			try:
+				if MAP[self.rect.x,self.rect.y-40] != "land" and self.rect.y == 40  and MAP[self.rect.x,self.rect.y+40] != "air":
+					self.rect.y-=40
+					self.in_air=True
+			except KeyError:
+				pass	
 	def fall(self):
 		if self.in_air:
 			self.rect.y+=40
@@ -85,6 +90,7 @@ class Map:
 		return Type
 def myround(x, base):
 	return int(base * round(float(x)/base))
+	
 def main():
 	#begin
 	pygame.init()
@@ -94,7 +100,6 @@ def main():
 	background = background.convert()
 	background.fill((BLACK))
 	gravity=0
-	
 	#make pygame sprite groups
 	world_sprites=pygame.sprite.Group()
 	other_sprites=pygame.sprite.Group()
@@ -126,6 +131,15 @@ def main():
 			world_sprites.add(Block([100,175,50],x,y,amount,amount,Type))
 		MAP[x,y] = Type
 		no += 1
+	
+	#Draw screen
+	
+	screen.blit(background, (0, 0))
+	world_sprites.draw(screen)
+	power_up_sprites.draw(screen)
+	other_sprites.draw(screen)
+	pygame.display.update()
+	
 	#game loop
 	while 1:
 		MAP.clear()
