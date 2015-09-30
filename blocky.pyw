@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+
 import pygame,random,time
+from pygame.locals import *
+from button import *
 
 #Constants
 WINDOWHEIGHT=800
@@ -82,7 +86,7 @@ class Map:
 		elif self.platform == True:
 			Type=random.choice(["land","land","land","air","land","air"])
 		else:
-			Type=random.choice(["land","air","air","air","air","air","air","air","air","air","air","air","air","air"])
+			Type=random.choice(["land","air","air","air","air","air","air","air","air","air","air","air","air","air","land","air"])
 		if Type == "land":
 			self.platform = True
 		else:
@@ -90,7 +94,6 @@ class Map:
 		return Type
 def myround(x, base):
 	return int(base * round(float(x)/base))
-	
 def main():
 	#begin
 	pygame.init()
@@ -103,11 +106,10 @@ def main():
 	#make pygame sprite groups
 	world_sprites=pygame.sprite.Group()
 	other_sprites=pygame.sprite.Group()
-	
+	buttons=pygame.sprite.Group()
 	#classes
 	map=Map()
 	player=Player()
-	
 	other_sprites.add(player)
 	#generate map
 	amount=40
@@ -130,14 +132,35 @@ def main():
 			world_sprites.add(Block([100,175,50],x,y,amount,amount,Type))
 		MAP[x,y] = Type
 		no += 1
-	
 	#Draw screen
-	
 	screen.blit(background, (0, 0))
 	world_sprites.draw(screen)
 	other_sprites.draw(screen)
 	pygame.display.update()
-	
+	#beginning gui
+	#                   Text    ,x   ,y   ,width ,height ,color
+	startButton=(Button("Start" ,400 ,340 ,80    ,40     ,GREEN))
+	exitButton=(Button("Exit",400,400,80,40,RED))
+	begin=False
+	buttons=pygame.sprite.Group()
+	buttons.add(exitButton)
+	buttons.add(startButton)
+	buttons.draw(screen)
+	while begin==False:
+		#check if a button is press
+		event=pygame.event.wait()
+		if event.type == pygame.QUIT:
+			quit()
+		if event.type == pygame.MOUSEBUTTONDOWN:
+			if startButton.pressed(pygame.mouse.get_pos()):
+				begin=True
+			elif exitButton.pressed(pygame.mouse.get_pos()):
+				quit()
+		screen.blit(background, (0, 0))
+		world_sprites.draw(screen)
+		other_sprites.draw(screen)
+		buttons.draw(screen)
+		pygame.display.update()
 	#game loop
 	while 1:
 		MAP.clear()
@@ -156,7 +179,6 @@ def main():
 				elif event.key == pygame.K_SPACE:
 					direction="up"
 					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
-		
 		#gravity
 		if player.rect.y+80 < WINDOWHEIGHT:
 			if gravity == 35:
