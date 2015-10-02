@@ -10,8 +10,8 @@ WINDOWWIDTH=800
 BLACK=[10,10,10]
 WHITE=[255,255,255]
 BLUE=[0,0,255]
-GREEN=[50,255,50]
-RED=[255,50,50]
+GREEN=[0,255,0]
+RED=[255,0,0]
 YELLOW=[255,255,0]
 WATER=[235,244,250]
 LAND=[0,250,30]
@@ -35,23 +35,25 @@ class Player(pygame.sprite.Sprite):
 		self.image.fill([0,0,255])
 		self.rect.x = 400
 		self.rect.y = 720
-		self.in_air = False
-		self.gravity = 0
-	def update_position(self,direction,WINDOWHEIGHT,MAP,world_sprites,ai_sprites):
+		self.in_air=False
+	def update_position(self,direction,WINDOWHEIGHT,MAP,world_sprites):
 		if direction=="left":
-			self.move(-40,MAP,world_sprites,ai_sprites)
+			self.move(-40,MAP,world_sprites)
 		elif direction=="right":
-			self.move(40,MAP,world_sprites,ai_sprites)
+			self.move(40,MAP,world_sprites)
 		elif direction=="up" and self.rect.y!=0 :
 			self.jump(MAP)
 			self.in_air=True
-	def move(self,x,MAP,world_sprites,ai_sprites):
+	def player_position(self):
+		pos={}
+		pos['x']=self.rect.x
+		pos['y']=self.rect.y
+		return pos
+	def move(self,x,MAP,world_sprites):
 		try:
 			if MAP[self.rect.x+x,self.rect.y] == "air":
 				for block in world_sprites:
 					block.rect.x -= x
-				for enemy in ai_sprites:
-					enemy.rect.x -= x
 		except KeyError:
 			pass
 	def jump(self,MAP):
@@ -72,76 +74,11 @@ class Player(pygame.sprite.Sprite):
 	def fall(self):
 		if self.in_air:
 			self.rect.y+=40
-class AI(pygame.sprite.Sprite):
-	def __init__(self,color,x,y):
-		pygame.sprite.Sprite.__init__(self)
-		self.image = pygame.Surface([40, 40])
-		self.rect = self.image.get_rect()
-		self.image.fill(color)
-		self.rect.x = x
-		self.rect.y = y
-		self.in_air = False
-		self.gravity = 0
-	def update_position(self,direction,WINDOWHEIGHT,MAP):
-		if direction=="left":
-			self.move(-40,MAP)
-		elif direction=="right":
-			self.move(40,MAP)
-		elif direction=="up" and self.rect.y!=0:
-			self.jump(MAP)
-			self.in_air=True
-		elif direction=="stay":
-			pass
-	def move(self,x,MAP):
-		try:
-			if MAP[self.rect.x+x,self.rect.y] == "air":
-				self.rect.x += x
-		except KeyError:
-			pass
-	def jump(self,MAP):
-		try:
-			if MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] != "land" and MAP[self.rect.x,self.rect.y+40] != "air":
-				self.rect.y-=80
-				self.in_air=True
-			elif MAP[self.rect.x,self.rect.y-40] != "land" and MAP[self.rect.x,self.rect.y-80] == "land" and MAP[self.rect.x,self.rect.y+40] != "air":
-				self.rect.y-=40
-				self.in_air=True
-		except KeyError:
-			try:
-				if MAP[self.rect.x,self.rect.y-40] != "land" and self.rect.y == 40  and MAP[self.rect.x,self.rect.y+40] != "air":
-					self.rect.y-=40
-					self.in_air=True
-			except KeyError:
-				pass	
-	def fall(self):
-		if self.in_air:
-			self.rect.y+=40
-	def think(self,player,MAP):
-		try:
-			if random.choice(["stay","stay","stay","stay","move"]) != "stay":
-				if player.rect.y < self.rect.y and  random.choice(["stay","jump"])=="jump": return "up"
-				elif player.rect.y > self.rect.y:
-					if player.rect.x > self.rect.x:
-						if MAP[self.rect.x-40,self.rect.y] == "air": return "right"
-						else: return "up"
-					elif player.rect.x < self.rect.x:
-						if MAP[self.rect.x+40,self.rect.y] == "air": return "left"
-						else: return "up"
-					else: return random.choice(["left","right","stay"])
-				else: return random.choice(["left","right","stay"])
-			elif random.choice(["random","stay","stay","stay"]) != "stay": return random.choice(["left","right","stay"])
-			else: return "stay"
-		except KeyError:
-			return random.choice(["left","right","stay"])
 class Map:
 	def __init__(self):
 		self.platform=False
 	def generate_type(self,x,y):
 		if x == 400 and y == 720: # for the player
-			Type = "air"
-		elif x == 320 and y == 400: #for the red enemy
-			Type = "air"
-		elif x == 0 and y == 40: #for the yellow enemy
 			Type = "air"
 		elif y == 760:
 			Type = "land"
@@ -165,20 +102,14 @@ def main():
 	background = pygame.Surface(screen.get_size())
 	background = background.convert()
 	background.fill((BLACK))
+	gravity=0
 	#make pygame sprite groups
 	world_sprites=pygame.sprite.Group()
 	other_sprites=pygame.sprite.Group()
-	ai_sprites=pygame.sprite.Group()
 	buttons=pygame.sprite.Group()
 	#classes
 	map=Map()
 	player=Player()
-	enemyRed=AI(RED,320,400)
-	other_sprites.add(enemyRed)
-	ai_sprites.add(enemyRed)
-	enemyYellow=AI(YELLOW,0,40)
-	other_sprites.add(enemyYellow)
-	ai_sprites.add(enemyYellow)
 	other_sprites.add(player)
 	#generate map
 	amount=40
@@ -230,8 +161,6 @@ def main():
 		other_sprites.draw(screen)
 		buttons.draw(screen)
 		pygame.display.update()
-	buttons.remove(startButton)
-	buttons.remove(exitButton)
 	#game loop
 	while 1:
 		MAP.clear()
@@ -241,154 +170,27 @@ def main():
 			if event.type == pygame.QUIT:
 				quit()
 			elif event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_ESCAPE:
-					screen.blit(background, (0, 0))
-					resumeButton=(Button("Resume",395,280,90,40,GREEN))
-					restartButton=(Button("Restart",390,340,100,40,GREEN))
-					exitButton=(Button("Exit",400,400,80,40,RED))
-					buttons.add(resumeButton)
-					buttons.add(exitButton)
-					buttons.add(restartButton)
-					buttons.draw(screen)
-					begin=False
-					while begin==False:
-						#check if a button is press
-						event=pygame.event.wait()
-						if event.type == pygame.QUIT:
-							quit()
-						if event.type == pygame.MOUSEBUTTONDOWN:
-							if resumeButton.pressed(pygame.mouse.get_pos()):
-								buttons.remove(resumeButton)
-								buttons.remove(restartButton)
-								buttons.remove(exitButton)
-								begin=True
-							elif restartButton.pressed(pygame.mouse.get_pos()):
-								buttons.remove(resumeButton)
-								buttons.remove(restartButton)
-								buttons.remove(exitButton)
-								begin=True
-								world_sprites.empty()
-								ai_sprites.empty()
-								other_sprites.empty()
-								map=Map()
-								player=Player()
-								enemyRed=AI(RED,320,400)
-								other_sprites.add(enemyRed)
-								ai_sprites.add(enemyRed)
-								enemyYellow=AI(YELLOW,0,40)
-								other_sprites.add(enemyYellow)
-								ai_sprites.add(enemyYellow)
-								other_sprites.add(player)
-								#generate map
-								amount=40
-								x=-800
-								y=0
-								no=0
-								for i in range(0,1200):
-									if no == 60:
-										y+=amount
-										x=-800
-										no=0
-									elif i==0:
-										x=-800
-									else:
-										x+= amount
-									Type = map.generate_type(x,y)
-									if Type == "air":
-										world_sprites.add(Block([100,100,250],x,y,amount,amount,Type))
-									elif Type == "land":
-										world_sprites.add(Block([100,175,50],x,y,amount,amount,Type))
-									MAP[x,y] = Type
-									no += 1
-							elif exitButton.pressed(pygame.mouse.get_pos()):
-								quit()
-						screen.blit(background, (0, 0))
-						world_sprites.draw(screen)
-						other_sprites.draw(screen)
-						buttons.draw(screen)
-						pygame.display.update()
-				elif event.key == pygame.K_LEFT:
+				if event.key == pygame.K_LEFT:
 					direction="left"
-					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites,ai_sprites)
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
 				elif event.key == pygame.K_RIGHT:
 					direction="right"
-					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites,ai_sprites)
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
 				elif event.key == pygame.K_SPACE:
 					direction="up"
-					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites,ai_sprites)
+					player.update_position(direction,WINDOWHEIGHT,MAP,world_sprites)
 		#gravity
-		for sprite in other_sprites:
-			if sprite.rect.y+80 < WINDOWHEIGHT:
-				if sprite.gravity == 35:
-					sprite.gravity=0
-					if sprite.in_air == True and MAP[sprite.rect.x,sprite.rect.y+40] != "land":
-						sprite.fall()
-				elif MAP[sprite.rect.x,sprite.rect.y+40] == "air":
-					sprite.in_air = True
-					sprite.gravity+=1
-				if MAP[sprite.rect.x,sprite.rect.y+40] == "land":
-					sprite.in_air = False
-					sprite.gravity = 0
-		for sprite in ai_sprites:
-			if sprite.rect == player.rect:
-				screen.blit(background, (0, 0))
-				restartButton=(Button("Retry",400,340,80,40,GREEN))
-				exitButton=(Button("Exit",400,400,80,40,RED))
-				buttons.add(exitButton)
-				buttons.add(restartButton)
-				buttons.draw(screen)
-				begin=False
-				while begin==False:
-					#check if a button is press
-					event=pygame.event.wait()
-					if event.type == pygame.QUIT:
-						quit()
-					if event.type == pygame.MOUSEBUTTONDOWN:
-						if restartButton.pressed(pygame.mouse.get_pos()):
-							buttons.remove(restartButton)
-							buttons.remove(exitButton)
-							begin=True
-							world_sprites.empty()
-							ai_sprites.empty()
-							other_sprites.empty()
-							map=Map()
-							player=Player()
-							enemyRed=AI(RED,320,400)
-							other_sprites.add(enemyRed)
-							ai_sprites.add(enemyRed)
-							enemyYellow=AI(YELLOW,0,40)
-							other_sprites.add(enemyYellow)
-							ai_sprites.add(enemyYellow)
-							other_sprites.add(player)
-							#generate map
-							amount=40
-							x=-800
-							y=0
-							no=0
-							for i in range(0,1200):
-								if no == 60:
-									y+=amount
-									x=-800
-									no=0
-								elif i==0:
-									x=-800
-								else:
-									x+= amount
-								Type = map.generate_type(x,y)
-								if Type == "air":
-									world_sprites.add(Block([100,100,250],x,y,amount,amount,Type))
-								elif Type == "land":
-									world_sprites.add(Block([100,175,50],x,y,amount,amount,Type))
-								MAP[x,y] = Type
-								no += 1
-						elif exitButton.pressed(pygame.mouse.get_pos()):
-							quit()
-					screen.blit(background, (0, 0))
-					world_sprites.draw(screen)
-					other_sprites.draw(screen)
-					buttons.draw(screen)
-					pygame.display.update()
-			sprite.update_position(sprite.think(player,MAP),WINDOWHEIGHT,MAP)
+		if player.rect.y+80 < WINDOWHEIGHT:
+			if gravity == 35:
+				gravity=0
+				if player.in_air == True and MAP[player.rect.x,player.rect.y+40] != "land":
+					player.fall()
+			elif MAP[player.rect.x,player.rect.y+40] == "air":
+				player.in_air = True
+				gravity+=1
+			if MAP [player.rect.x,player.rect.y+40] == "land":
+				player.in_air = False
+				gravity = 0
 		#draw background
 		screen.blit(background, (0, 0))
 		world_sprites.draw(screen)
