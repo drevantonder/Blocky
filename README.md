@@ -10,3 +10,4 @@ No images used.
 
 Please report any bugs at https://github.com/DrevanTonder/Blocky/issues
  
+Blocky website: http://thewhateverclub.altervista.org/studio/blocky
