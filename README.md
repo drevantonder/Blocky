@@ -7,6 +7,7 @@ No images used.
 2. Press the space bar to jump
 3. Look out for the red and yellow blocks if they get on the same square as you lose.
 4. Press escape for a menu with resume, restart, and exit.
+5. Press s to take screenshot
 
 Please report any bugs at https://github.com/DrevanTonder/Blocky/issues
  
